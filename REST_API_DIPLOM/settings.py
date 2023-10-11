@@ -136,3 +136,7 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'sales_product_app.CustomUser'
+
+SERIALIZATION_MODULES = {
+    'yaml': "django.core.serializers.pyyaml"
+}

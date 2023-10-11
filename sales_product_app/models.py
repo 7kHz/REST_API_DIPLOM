@@ -65,7 +65,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Shop(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название')
     url = models.URLField(blank=True, null=True)
-    filename = models.CharField(max_length=30, unique=True, blank=True, verbose_name='Имя_файла')
+    filename = models.CharField(max_length=30, blank=True, verbose_name='Имя_файла')
 
     class Meta:
         verbose_name = 'Магазин'
