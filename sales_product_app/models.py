@@ -72,7 +72,7 @@ class Shop(models.Model):
         verbose_name_plural = 'Магазины'
 
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.url}'
 
 
 class Category(models.Model):
@@ -88,7 +88,7 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=30, unique=True, verbose_name='Название')
+    name = models.CharField(max_length=100, unique=True, verbose_name='Название')
     category = models.ForeignKey(Category, blank=True, verbose_name='Категории',
                                  related_name='product_category', on_delete=models.CASCADE)
 
@@ -101,7 +101,7 @@ class Product(models.Model):
 
 
 class ProductInfo(models.Model):
-    name = models.CharField(max_length=30, unique=True, verbose_name='Название')
+    name = models.CharField(max_length=100, unique=True, verbose_name='Название')
     quantity = models.PositiveIntegerField(verbose_name='Количество')
     price = models.PositiveIntegerField(verbose_name='Стоимость')
     retail_price = models.PositiveIntegerField(verbose_name='Розничная цена')
@@ -119,11 +119,14 @@ class ProductInfo(models.Model):
 
 
 class ProductParameter(models.Model):
-    value = models.BooleanField(verbose_name='Статус')
-    product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
+    value = models.CharField(max_length=30, verbose_name='Значение', blank=True, null=True)
+    product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте', blank=True, null=True,
                                      related_name='productparametr_product_info', on_delete=models.CASCADE)
-    parameter = models.ForeignKey('Parameter', verbose_name='Параметр',
+    parameter = models.ForeignKey('Parameter', verbose_name='Параметр', blank=True, null=True,
                                   related_name='productparameter_parameter', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.value
 
     class Meta:
         verbose_name = 'Параметр продукта'
