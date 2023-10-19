@@ -136,8 +136,10 @@ REST_FRAMEWORK = {
     )
 }
 
-AUTH_USER_MODEL = 'sales_product_app.CustomUser'
+# AUTH_USER_MODEL = 'sales_product_app.CustomUser'
 
-# SERIALIZATION_MODULES = {
-#     'yaml': "django.core.serializers.pyyaml"
-# }
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'sales_product_app.serializers.UserRegistrationSerializer'
+    }
+}
