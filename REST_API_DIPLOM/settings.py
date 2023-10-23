@@ -131,15 +131,34 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
     )
 }
 
-# AUTH_USER_MODEL = 'sales_product_app.CustomUser'
+AUTH_USER_MODEL = 'sales_product_app.CustomUser'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.yandex.ru'  # Replace with your SMTP server address
+EMAIL_PORT = 465  # Replace with the appropriate port for your email provider
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'guitarheroe2012@ya.ru'  # Replace with your email address
+EMAIL_HOST_PASSWORD = 'pfbxihqokmpgjpdq'  # Replace with your email password
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Replace with your email address
+
 
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'sales_product_app.serializers.UserRegistrationSerializer'
-    }
+        'user_create': 'sales_product_app.serializers.CustomUserSerializer',
+        'user': 'sales_product_app.serializers.CustomUserSerializer'
+    },
+    'SEND_ACTIVATION_EMAIL': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    # 'SEND_PASSWORD_CHANGED_EMAIL': True,
+    # 'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+    # 'USERNAME_RESET_CONFIRM_URL': 'username/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'CONFIRMATION_URL': 'confirm/{uid}/{token}',
 }

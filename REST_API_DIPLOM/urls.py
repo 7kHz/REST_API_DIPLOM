@@ -19,15 +19,24 @@ from django.urls import path, include, re_path
 from djoser.views import UserViewSet
 from rest_framework.routers import DefaultRouter
 
-from sales_product_app.views import UserInfoView
+from sales_product_app.views import ProductInfoView, ShopView, CategoryView, account_activation_success
 
-router = DefaultRouter()
-router.register('users', UserViewSet)
+
+# from sales_product_app.views import UserInfoView
+
+# router = DefaultRouter()
+# router.register('users', UserViewSet)
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^auth/', include('djoser.urls.authtoken')),
-    path('api/v1/', include(router.urls)),
-    path('api/v1/user-info/', UserInfoView.as_view(), name='user_info_register')
+    re_path(r'^auth/', include('djoser.urls.authtoken'), name='token-login-logout'),
+    path('api/v1/', include('djoser.urls'), name='user-create-password-reset'),
+    path('api/v1/product/<int:pk>/', ProductInfoView.as_view(), name='product-detail'),
+    path('api/v1/product/', ProductInfoView.as_view(), name='product-list'),
+    path('api/v1/shops/', ShopView.as_view(), name='shops-list'),
+    path('api/v1/categories/', CategoryView.as_view(), name='category-list'),
+    path('activate/<str:uid>/<str:token>/', account_activation_success, name='account_activation_success')
+
+
 ]

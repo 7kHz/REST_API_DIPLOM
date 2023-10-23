@@ -1,6 +1,6 @@
-from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 from django.utils import timezone
 
 STATE_CHOICES = (
@@ -36,49 +36,40 @@ USER_TYPE_CHOICES = (
 #         return self.create_user(email, password, **extra_fields)
 #
 #
-# class CustomUser(AbstractUser, PermissionsMixin):
-#     username = models.CharField(max_length=100, unique=True, verbose_name='Пользователь')
-#     email = models.EmailField(unique=True)
-#     first_name = models.CharField(max_length=30, blank=True)
-#     last_name = models.CharField(max_length=30, blank=True)
-#     is_active = models.BooleanField(default=True)
-#     is_staff = models.BooleanField(default=False)
-#     date_joined = models.DateTimeField(default=timezone.now)
-#     company = models.CharField(max_length=100, verbose_name='Компания', blank=True)
-#     position = models.CharField(max_length=30, verbose_name='Должность', blank=True)
-#     type = models.CharField(max_length=10, verbose_name='Тип пользователя', choices=USER_TYPE_CHOICES, default='buyer')
-#
-#     objects = CustomUserManager()
-#
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = []
-#
-#     def __str__(self):
-#         return f'{self.first_name} {self.last_name}'
-#
-#     class Meta:
-#         verbose_name = 'Пользователь'
-#         verbose_name_plural = "Список пользователей"
-#         # ordering = ('email',)
-
-class UserInfo(models.Model):
-    user = models.OneToOneField(User, verbose_name='Пользователь', on_delete=models.CASCADE, blank=True,
-                                related_name='user')
+class CustomUser(AbstractUser):
+    username = models.CharField(max_length=100, unique=True, verbose_name='Пользователь')
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=30, verbose_name='Имя')
+    last_name = models.CharField(max_length=30, verbose_name='Фамилия')
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now)
     company = models.CharField(max_length=50, verbose_name='Компания')
-    position = models.CharField(max_length=50, verbose_name='Позиция')
+    position = models.CharField(max_length=30, verbose_name='Должность')
+    type = models.CharField(max_length=10, verbose_name='Тип пользователя', choices=USER_TYPE_CHOICES, default='buyer')
+    #     objects = CustomUserManager()
+    #
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    #
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
 
     class Meta:
-        verbose_name = 'Информация о пользователе'
-        verbose_name_plural = 'Информация о пользователях'
-
-    def __str__(self):
-        return f'{self.user}, {self.company}, {self.position}'
+        verbose_name = 'Пользователь'
+        verbose_name_plural = "Список пользователей"
+        ordering = ('email',)
 
 
 class Shop(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название')
     url = models.URLField(blank=True, null=True)
     filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
+    user = models.OneToOneField(CustomUser, max_length=50, verbose_name='Пользователь',
+                                blank=True, null=True, on_delete=models.CASCADE)
+    status = models.BooleanField(verbose_name='Статус получения заказов', default=True)
+
 
     class Meta:
         verbose_name = 'Магазин'
@@ -157,7 +148,7 @@ class Parameter(models.Model):
         return self.name
 
 
-class OrderItem(models.Model):
+class OrderList(models.Model):
     quantity = models.PositiveIntegerField(verbose_name='Количество')
     shop = models.ForeignKey(Shop, blank=True, verbose_name='Магазины',
                              related_name='orderitem_shop', on_delete=models.CASCADE)
@@ -173,16 +164,15 @@ class OrderItem(models.Model):
 
 class Order(models.Model):
     date = models.DateField(verbose_name='Дата заказа', auto_now_add=True)
-    status = models.Field(choices=STATE_CHOICES, verbose_name='Статус')
-    user = models.ForeignKey(User, blank=True, verbose_name='Пользователь',
-                             related_name='order_user', choices=STATE_CHOICES,
-                             on_delete=models.CASCADE)
+    status = models.CharField(max_length=30, choices=STATE_CHOICES, verbose_name='Статус')
+    user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='order_user',
+                             choices=STATE_CHOICES, on_delete=models.CASCADE)
 
 
 class Contact(models.Model):
     type = models.CharField(max_length=30, unique=True, verbose_name='Тип')
     value = models.CharField(max_length=30, unique=True, verbose_name='Значение')
-    user = models.ForeignKey(User, blank=True, verbose_name='Пользователь',
+    user = models.ForeignKey(CustomUser, blank=True, verbose_name='Пользователь',
                              related_name='contact_user', on_delete=models.CASCADE)
 
     class Meta:
