@@ -64,7 +64,7 @@ class CustomUser(AbstractUser):
 
 class Shop(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название')
-    url = models.URLField(blank=True, null=True)
+    url = models.URLField(blank=True, max_length=100)
     filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
     user = models.OneToOneField(CustomUser, max_length=50, verbose_name='Пользователь',
                                 blank=True, null=True, on_delete=models.CASCADE)
@@ -76,7 +76,7 @@ class Shop(models.Model):
         verbose_name_plural = 'Магазины'
 
     def __str__(self):
-        return f'{self.name}, {self.url}'
+        return self.name
 
 
 class Category(models.Model):
@@ -110,9 +110,10 @@ class ProductInfo(models.Model):
     price = models.PositiveIntegerField(verbose_name='Стоимость')
     retail_price = models.PositiveIntegerField(verbose_name='Розничная цена')
     product = models.ForeignKey(Product, blank=True, verbose_name='Продукты',
-                                related_name='productinfo_product', on_delete=models.CASCADE)
+                                related_name='product_name', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, blank=True, verbose_name='Магазины',
                              related_name='productinfo_shop', on_delete=models.CASCADE)
+    basket_url = models.URLField(max_length=100, blank=True)
 
     class Meta:
         verbose_name = 'Продукт_инфо'
@@ -125,9 +126,9 @@ class ProductInfo(models.Model):
 class ProductParameter(models.Model):
     value = models.CharField(max_length=30, verbose_name='Значение', blank=True, null=True)
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте', blank=True, null=True,
-                                     related_name='productparametr_product_info', on_delete=models.CASCADE)
+                                     related_name='product_parameter', on_delete=models.CASCADE)
     parameter = models.ForeignKey('Parameter', verbose_name='Параметр', blank=True, null=True,
-                                  related_name='productparameter_parameter', on_delete=models.CASCADE)
+                                  related_name='parameter_name', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.value
