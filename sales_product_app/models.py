@@ -113,7 +113,6 @@ class ProductInfo(models.Model):
                                 related_name='product_name', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, blank=True, verbose_name='Магазины',
                              related_name='productinfo_shop', on_delete=models.CASCADE)
-    basket_url = models.URLField(max_length=100, blank=True)
 
     class Meta:
         verbose_name = 'Продукт_инфо'

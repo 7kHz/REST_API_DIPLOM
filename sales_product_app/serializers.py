@@ -29,12 +29,14 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name')
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = serializers.StringRelatedField()
-
+    url = serializers.HyperlinkedIdentityField(view_name="product-detail")
+    # url = serializers.StringRelatedField()
     class Meta:
         model = Product
-        fields = ('name', 'category')
+        fields = ('url', 'name', 'category')
+        # extra_kwargs = {'url': {'view_name': 'product-detail'}}
 
 
 class ParameterSerializer(serializers.ModelSerializer):
@@ -53,17 +55,11 @@ class ProductParameterSerializer(serializers.ModelSerializer):
         fields = ('parameter', 'value')
 
 
-# class BasketUrlSerializer(serializers.HyperlinkedModelSerializer):
-#     product = serializers.StringRelatedField()
-#     class Meta:
-#         model = ProductInfo
-#         fields = ('url',)
-
-
 class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
     shop = serializers.StringRelatedField()
     product_parameter = ProductParameterSerializer(read_only=True, many=True)
     product = serializers.StringRelatedField()
+
     class Meta:
         model = ProductInfo
         fields = ('id', 'url', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter')

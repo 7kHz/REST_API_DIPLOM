@@ -19,13 +19,14 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from sales_product_app.views import ShopView, CategoryView, account_activation_success, ProductInfoViewSet, \
-    ProductViewList
+    ProductViewSet
 
 
 router = DefaultRouter()
 router.register(r'products-info', ProductInfoViewSet)
+router.register('products', ProductViewSet, basename='product')
 
-
+app_name = 'sales_product_app'
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^auth/', include('djoser.urls.authtoken'), name='token-login-logout'),
@@ -33,7 +34,6 @@ urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/shops/', ShopView.as_view(), name='shops-list'),
     path('api/v1/categories/', CategoryView.as_view(), name='category-list'),
-    path('api/v1/products/', ProductViewList.as_view(), name='product-list'),
-    # path('api/v1/basket/', ProductInfoView.as_view(), name='test-url'),
+    # path('api/v1/products/', ProductViewList.as_view(), name='product-detail'),
     path('activate/<str:uid>/<str:token>/', account_activation_success, name='account_activation_success')
 ]

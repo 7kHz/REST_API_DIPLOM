@@ -39,7 +39,7 @@ class CategoryView(ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-class ProductViewList(ListAPIView):
+class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [OrderingFilter, SearchFilter]
@@ -64,16 +64,3 @@ class ProductInfoViewSet(viewsets.ModelViewSet):
     #     serializer = BasketUrlSerializer(queryset, many=True, context={'request': request})
     #     return Response(serializer.data)
 
-# class ParameterView(ListAPIView):
-#     queryset = Parameter.objects.all()
-#     serializer_class = ParameterSerializer
-#     filter_backends = [SearchFilter]
-#     search_fields = ['name']
-#     permission_classes = [IsAuthenticatedOrReadOnly]
-
-# class ProductParameterView(ListAPIView):
-#     queryset = ProductParameter.objects.all()
-#     serializer_class = ProductParameterSerializer
-#     filter_backends = [SearchFilter]
-#     search_fields = ['value']
-#     permission_classes = [IsAuthenticatedOrReadOnly]
