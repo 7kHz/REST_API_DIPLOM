@@ -62,3 +62,13 @@ goods:
       "Разрешение (пикс)": 1792x828
       "Встроенная память (Гб)": 256
       "Цвет": синий
+  - id: 1
+    category: 1
+    model: Kingston
+    name: Kingston DataTraveler Exodia Onyx 64GB USB3.2 Black
+    price: 500
+    price_rrc: 599
+    quantity: 21
+    parameters:
+      "Встроенная память (ГБ)": 64
+      "Интерфейс подключения": USB 3.2

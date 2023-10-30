@@ -2,13 +2,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter, ProductParameter
+from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter, ProductParameter, Order, OrderList
 
 
 class CustomUserSerializer(UserCreateSerializer):
+    is_active = serializers.BooleanField(default=True)
+
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
-        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 'company', 'position', 'type')
+        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 'is_active',
+                  'company', 'position', 'type')
 
 
 # class ProductInfoSerializer(serializers.ModelSerializer):
@@ -32,11 +35,10 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = serializers.StringRelatedField()
     url = serializers.HyperlinkedIdentityField(view_name="product-detail")
-    # url = serializers.StringRelatedField()
+
     class Meta:
         model = Product
         fields = ('url', 'name', 'category')
-        # extra_kwargs = {'url': {'view_name': 'product-detail'}}
 
 
 class ParameterSerializer(serializers.ModelSerializer):
@@ -59,7 +61,23 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
     shop = serializers.StringRelatedField()
     product_parameter = ProductParameterSerializer(read_only=True, many=True)
     product = serializers.StringRelatedField()
+    # basket = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
+
+    # url = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
 
     class Meta:
         model = ProductInfo
-        fields = ('id', 'url', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter')
+        fields = ('product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket')
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    order = OrderSerializer(many=True)
+    class Meta:
+        model = OrderList
+        fields = ()

@@ -3,15 +3,16 @@ from django.http import Http404
 from django.shortcuts import render, get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveAPIView, \
+    RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 
-from .models import ProductInfo, Shop, Category, Product, Parameter, ProductParameter
+from .models import ProductInfo, Shop, Category, Product, Parameter, ProductParameter, Order, OrderList
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
-    ParameterSerializer, ProductParameterSerializer
+    OrderSerializer, OrderListSerializer
 
 
 # Create your views here.
@@ -48,19 +49,38 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-class ProductInfoViewSet(viewsets.ModelViewSet):
+# class ProductInfoViewSet(viewsets.ModelViewSet):
+#     queryset = ProductInfo.objects.all()
+#     serializer_class = ProductInfoSerializer
+#     filter_backends = [OrderingFilter]
+#     ordering_fields = ['retail_price']
+#     permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class ProductInfoView(RetrieveAPIView):
     queryset = ProductInfo.objects.all()
     serializer_class = ProductInfoSerializer
-    filter_backends = [OrderingFilter]
-    ordering_fields = ['retail_price']
     permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'product_id'
 
 
-# class ProductInfoView(ListAPIView):
-#     queryset = ProductInfo.objects.all()
-#     serializer_class = BasketUrlSerializer
-    # def get(self, request):
-    #     queryset = ProductInfo.objects.all()
-    #     serializer = BasketUrlSerializer(queryset, many=True, context={'request': request})
-    #     return Response(serializer.data)
+# class BasketView(ListCreateAPIView):
+#     queryset = Order.objects.all()
+#     serializer_class = OrderSerializer
+#     permission_classes = [IsAuthenticatedOrReadOnly]
+    # lookup_field = 'id'
 
+class BasketView(ListCreateAPIView):
+    # queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    # def create(self, request, *args, **kwargs):
+        # basket_product = ProductInfo.objects.filter(basket=True)
+        #
+
+
+        # order_serializer = self.get_serializer(data=request.data)
+        # order_serializer.is_valid(raise_exception=True)
+        # order = order_serializer.save()
+        # return Response({'order': order_serializer.data})

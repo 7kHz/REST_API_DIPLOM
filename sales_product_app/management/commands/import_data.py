@@ -32,9 +32,7 @@ class Command(BaseCommand):
                 Product.objects.get_or_create(id=product['id'],
                                               category_id=product['category'],
                                               name=product['name'])
-                # for shop in Product.objects.values(shop_id=F('category__shops__id')):
                 ProductInfo.objects.get_or_create(product_id=product['id'],
-                                                  shop_id=1,
                                                   name=product['name'],
                                                   quantity=product['quantity'],
                                                   price=product['price'],
@@ -44,5 +42,9 @@ class Command(BaseCommand):
                     ProductParameter.objects.create(parameter_id=Parameter.objects.get(name=key).id,
                                                     product_info_id=ProductInfo.objects.get(name=product['name']).id,
                                                     value=value)
+            products_to_update = Product.objects.values('id', shop_id=F('category__shops__id'))
+            for product_to_update in products_to_update:
+                ProductInfo.objects.filter(product_id=product_to_update['id']).\
+                    update(shop_id=product_to_update['shop_id'])
         except yaml.YAMLError as error:
             print(error)

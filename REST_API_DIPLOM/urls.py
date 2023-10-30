@@ -14,17 +14,20 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from pprint import pprint
+
 from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
-from sales_product_app.views import ShopView, CategoryView, account_activation_success, ProductInfoViewSet, \
-    ProductViewSet
+from sales_product_app.views import ShopView, CategoryView, account_activation_success, ProductInfoView, \
+    ProductViewSet, BasketView
 
 
 router = DefaultRouter()
-router.register(r'products-info', ProductInfoViewSet)
+# router.register(r'products-info', ProductInfoViewSet)
 router.register('products', ProductViewSet, basename='product')
+# pprint(router.urls)
 
 app_name = 'sales_product_app'
 urlpatterns = [
@@ -34,6 +37,7 @@ urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/shops/', ShopView.as_view(), name='shops-list'),
     path('api/v1/categories/', CategoryView.as_view(), name='category-list'),
-    # path('api/v1/products/', ProductViewList.as_view(), name='product-detail'),
+    path('api/v1/products/<int:product_id>/detail/', ProductInfoView.as_view(), name='productinfo-detail'),
+    path('api/v1/orders/', BasketView.as_view(), name='orders'),
     path('activate/<str:uid>/<str:token>/', account_activation_success, name='account_activation_success')
 ]
