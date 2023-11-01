@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveAPIView, \
-    RetrieveUpdateDestroyAPIView
+    RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,15 +17,22 @@ from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializ
 
 # Create your views here.
 
-def account_activation_success(request, uid, token):
-    try:
-        # if request.user.is_authenticated:
-        # user = get_object_or_404(get_user_model(), id=request.user.id)
-        # username = user.username
-        if token and uid:
-            return render(request, 'account_activation_success.html')
-    except Http404:
-        return render(request, 'account_activation_error.html')
+def account_activation(request, uid, token):
+    context = {
+        'uid': uid,
+        'token': token
+    }
+    return render(request, 'account_activation.html', context)
+
+
+def create_order(user_id, product_info_id, product):
+    order_count = Order.objects.filter(product_info_id=product_info_id).count()
+    if order_count >= 1:
+        return Response(f"{product} уже в корзине")
+    Order.objects.create(user_id=user_id, product_info_id=product_info_id)
+    return Response(f"{product} добавлен в Корзину")
+
+
 
 
 class ShopView(ListAPIView):
@@ -57,30 +64,31 @@ class ProductViewSet(viewsets.ModelViewSet):
 #     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-class ProductInfoView(RetrieveAPIView):
-    queryset = ProductInfo.objects.all()
-    serializer_class = ProductInfoSerializer
+class ProductInfoView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    lookup_field = 'product_id'
 
+    def get(self, request, product_id):
+        product_info = ProductInfo.objects.get(product_id=product_id)
 
-# class BasketView(ListCreateAPIView):
-#     queryset = Order.objects.all()
-#     serializer_class = OrderSerializer
-#     permission_classes = [IsAuthenticatedOrReadOnly]
-    # lookup_field = 'id'
+        return Response(ProductInfoSerializer(product_info).data)
+
+    def put(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        if not product_id:
+            return Response({'Error': 'Method PUT not allowed'})
+        try:
+            instance = ProductInfo.objects.get(product_id=product_id)
+        except:
+            return Response({'Error': 'Object does not exists'})
+        serializer = ProductInfoSerializer(data=request.data, instance=instance)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        if serializer.data['basket']:
+            return create_order(request.user.id, serializer.data['id'], serializer.data['product'])
+        return Response(serializer.data)
+
 
 class BasketView(ListCreateAPIView):
     # queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+    # serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
-
-    # def create(self, request, *args, **kwargs):
-        # basket_product = ProductInfo.objects.filter(basket=True)
-        #
-
-
-        # order_serializer = self.get_serializer(data=request.data)
-        # order_serializer.is_valid(raise_exception=True)
-        # order = order_serializer.save()
-        # return Response({'order': order_serializer.data})

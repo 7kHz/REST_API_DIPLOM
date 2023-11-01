@@ -152,7 +152,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Replace with your email address
 DJOSER = {
     'SERIALIZERS': {
         'user_create': 'sales_product_app.serializers.CustomUserSerializer',
-        'user': 'sales_product_app.serializers.CustomUserSerializer'
+        # 'user': 'sales_product_app.serializers.CustomUserSerializer'
     },
     'SEND_ACTIVATION_EMAIL': True,
     'SEND_CONFIRMATION_EMAIL': True,

@@ -6,11 +6,9 @@ from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter,
 
 
 class CustomUserSerializer(UserCreateSerializer):
-    is_active = serializers.BooleanField(default=True)
-
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
-        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 'is_active',
+        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name',
                   'company', 'position', 'type')
 
 
@@ -61,13 +59,17 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
     shop = serializers.StringRelatedField()
     product_parameter = ProductParameterSerializer(read_only=True, many=True)
     product = serializers.StringRelatedField()
+    basket = serializers.BooleanField(required=True)
+    quantity = serializers.IntegerField(required=False)
+    retail_price = serializers.IntegerField(required=False)
+
     # basket = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
 
     # url = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
 
     class Meta:
         model = ProductInfo
-        fields = ('product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket')
+        fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket')
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -78,6 +80,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(serializers.ModelSerializer):
     order = OrderSerializer(many=True)
+
     class Meta:
         model = OrderList
         fields = ()
+

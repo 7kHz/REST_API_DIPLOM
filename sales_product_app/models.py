@@ -41,14 +41,12 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30, verbose_name='Имя')
     last_name = models.CharField(max_length=30, verbose_name='Фамилия')
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     company = models.CharField(max_length=50, verbose_name='Компания')
     position = models.CharField(max_length=30, verbose_name='Должность')
     type = models.CharField(max_length=10, verbose_name='Тип пользователя', choices=USER_TYPE_CHOICES, default='buyer')
-    #     objects = CustomUserManager()
-    #
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
@@ -112,7 +110,7 @@ class ProductInfo(models.Model):
                                 related_name='product_name', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, blank=True, null=True, verbose_name='Магазины',
                              related_name='productinfo_shop', on_delete=models.CASCADE)
-    basket = models.BooleanField(default=True)
+    basket = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Продукт_инфо'
@@ -150,12 +148,9 @@ class Parameter(models.Model):
 
 class OrderList(models.Model):
     quantity = models.PositiveIntegerField(verbose_name='Количество')
-    shop = models.ForeignKey(Shop, blank=True, verbose_name='Магазины',
-                             related_name='orderitem_shop', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, blank=True, verbose_name='Продукты',
-                                related_name='orderitem_product', on_delete=models.CASCADE)
-    order = models.ForeignKey('Order', blank=True, verbose_name='Заказ',
-                              related_name='orderitem_order', on_delete=models.CASCADE)
+    shop_id = models.PositiveIntegerField(verbose_name='Магазины')
+    product_id = models.PositiveIntegerField(verbose_name='Продукты')
+    order_id = models.PositiveIntegerField(verbose_name='Заказ')
 
     class Meta:
         verbose_name = 'Заказанная позиция'
@@ -164,8 +159,10 @@ class OrderList(models.Model):
 
 class Order(models.Model):
     date = models.DateField(verbose_name='Дата заказа', auto_now_add=True)
-    status = models.CharField(max_length=30, choices=STATE_CHOICES, verbose_name='Статус')
+    status = models.CharField(max_length=30, choices=STATE_CHOICES, verbose_name='Статус', default='basket')
     user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
+    product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
+                                     related_name='orders', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Заказ'
@@ -189,3 +186,6 @@ class Contact(models.Model):
 
     def __str__(self):
         return f'{self.city} {self.street} {self.house}'
+
+
+
