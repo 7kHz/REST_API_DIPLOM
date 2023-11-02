@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.db.models import F, Sum
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveAPIView, \
-    RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
+    RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +13,7 @@ from rest_framework import viewsets
 
 from .models import ProductInfo, Shop, Category, Product, Parameter, ProductParameter, Order, OrderList
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
-    OrderSerializer, OrderListSerializer
+    OrderSerializer, OrderQuantityUpdateSerializer
 
 
 # Create your views here.
@@ -31,8 +32,6 @@ def create_order(user_id, product_info_id, product):
         return Response(f"{product} уже в корзине")
     Order.objects.create(user_id=user_id, product_info_id=product_info_id)
     return Response(f"{product} добавлен в Корзину")
-
-
 
 
 class ShopView(ListAPIView):
@@ -56,20 +55,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# class ProductInfoViewSet(viewsets.ModelViewSet):
-#     queryset = ProductInfo.objects.all()
-#     serializer_class = ProductInfoSerializer
-#     filter_backends = [OrderingFilter]
-#     ordering_fields = ['retail_price']
-#     permission_classes = [IsAuthenticatedOrReadOnly]
-
-
 class ProductInfoView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, product_id):
         product_info = ProductInfo.objects.get(product_id=product_id)
-
         return Response(ProductInfoSerializer(product_info).data)
 
     def put(self, request, *args, **kwargs):
@@ -88,7 +78,20 @@ class ProductInfoView(APIView):
         return Response(serializer.data)
 
 
-class BasketView(ListCreateAPIView):
-    # queryset = Order.objects.all()
-    # serializer_class = OrderSerializer
+class BasketView(ListAPIView):
+    serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        queryset = Order.objects.filter(user_id=user_id).select_related('product_info')
+        queryset = queryset.annotate(name=F('product_info__name'),
+                                     shop=F('product_info__shop__name'),
+                                     price=F('product_info__retail_price'),
+                                     sum_value=Sum(F('product_info__retail_price') * F('quantity')))
+        return queryset
+
+
+class BasketUpdateView(RetrieveUpdateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderQuantityUpdateSerializer

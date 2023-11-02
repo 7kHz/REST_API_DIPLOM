@@ -21,13 +21,11 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from sales_product_app.views import ShopView, CategoryView, ProductInfoView, ProductViewSet, BasketView, \
-    account_activation
+    account_activation, BasketUpdateView
 
 
 router = DefaultRouter()
-# router.register(r'products-info', ProductInfoViewSet)
 router.register('products', ProductViewSet, basename='product')
-# pprint(router.urls)
 
 app_name = 'sales_product_app'
 urlpatterns = [
@@ -39,5 +37,6 @@ urlpatterns = [
     path('api/v1/categories/', CategoryView.as_view(), name='category-list'),
     path('api/v1/products/<int:product_id>/detail/', ProductInfoView.as_view(), name='productinfo-detail'),
     path('api/v1/orders/', BasketView.as_view(), name='orders'),
+    path('api/v1/orders/<int:pk>/', BasketUpdateView.as_view(), name='order-update'),
     path('activate/<str:uid>/<str:token>/', account_activation, name='account_activation_success')
 ]

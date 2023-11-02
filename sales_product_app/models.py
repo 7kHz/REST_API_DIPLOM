@@ -160,6 +160,7 @@ class OrderList(models.Model):
 class Order(models.Model):
     date = models.DateField(verbose_name='Дата заказа', auto_now_add=True)
     status = models.CharField(max_length=30, choices=STATE_CHOICES, verbose_name='Статус', default='basket')
+    quantity = models.PositiveIntegerField(verbose_name='Количество', default=1)
     user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
                                      related_name='orders', on_delete=models.CASCADE)

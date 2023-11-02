@@ -73,9 +73,27 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=100)
+    shop = serializers.CharField(max_length=50)
+    price = serializers.IntegerField(min_value=0)
+    sum_value = serializers.IntegerField(min_value=0)
+
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ('id', 'name', 'shop', 'price', 'quantity', 'sum_value')
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class OrderQuantityUpdateSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(required=False)
+    # product_info = serializers.IntegerField(required=False)
+    quantity = serializers.IntegerField(required=True, min_value=1)
+
+    class Meta:
+        model = Order
+        fields = ('id', 'user', 'quantity')
 
 
 class OrderListSerializer(serializers.ModelSerializer):
@@ -84,4 +102,3 @@ class OrderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderList
         fields = ()
-
