@@ -10,6 +10,7 @@ STATE_CHOICES = (
     ('assembled', 'Собран'),
     ('sent', 'Отправлен'),
     ('delivered', 'Доставлен'),
+    ('received', 'Получен'),
     ('canceled', 'Отменен'),
 )
 
@@ -103,7 +104,7 @@ class Product(models.Model):
 
 class ProductInfo(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name='Название')
-    quantity = models.PositiveIntegerField(verbose_name='Количество')
+    quantity_in_stock = models.PositiveIntegerField(verbose_name='Количество')
     price = models.PositiveIntegerField(verbose_name='Стоимость')
     retail_price = models.PositiveIntegerField(verbose_name='Розничная цена')
     product = models.ForeignKey(Product, blank=True, verbose_name='Продукты',
@@ -146,15 +147,15 @@ class Parameter(models.Model):
         return self.name
 
 
-class OrderList(models.Model):
-    quantity = models.PositiveIntegerField(verbose_name='Количество')
-    shop_id = models.PositiveIntegerField(verbose_name='Магазины')
-    product_id = models.PositiveIntegerField(verbose_name='Продукты')
-    order_id = models.PositiveIntegerField(verbose_name='Заказ')
-
-    class Meta:
-        verbose_name = 'Заказанная позиция'
-        verbose_name_plural = 'Список заказанных позиций'
+# class OrderList(models.Model):
+#     quantity = models.PositiveIntegerField(verbose_name='Количество')
+#     shop_id = models.PositiveIntegerField(verbose_name='Магазины')
+#     product_id = models.PositiveIntegerField(verbose_name='Продукты')
+#     order_id = models.PositiveIntegerField(verbose_name='Заказ')
+#
+#     class Meta:
+#         verbose_name = 'Заказанная позиция'
+#         verbose_name_plural = 'Список заказанных позиций'
 
 
 class Order(models.Model):
@@ -164,10 +165,18 @@ class Order(models.Model):
     user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
                                      related_name='orders', on_delete=models.CASCADE)
+    order_list = models.ForeignKey('Order_list', verbose_name='Список заказов', related_name='orders_list',
+                                   on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+
+class Order_list(models.Model):
+    user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='order_list',
+                             on_delete=models.CASCADE)
+    date = models.DateField(verbose_name='Дата заказа', blank=True)
+
 
 
 class Contact(models.Model):

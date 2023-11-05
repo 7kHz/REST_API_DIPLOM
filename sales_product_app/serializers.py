@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter, ProductParameter, Order, OrderList
+from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter, ProductParameter, Order, Contact
 
 
 class CustomUserSerializer(UserCreateSerializer):
@@ -10,12 +10,6 @@ class CustomUserSerializer(UserCreateSerializer):
         model = CustomUser
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name',
                   'company', 'position', 'type')
-
-
-# class ProductInfoSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProductInfo
-#         fields = ('__all__')
 
 
 class ShopSerializer(serializers.ModelSerializer):
@@ -48,8 +42,6 @@ class ParameterSerializer(serializers.ModelSerializer):
 class ProductParameterSerializer(serializers.ModelSerializer):
     parameter = serializers.StringRelatedField()
 
-    # product_info = serializers.StringRelatedField()
-
     class Meta:
         model = ProductParameter
         fields = ('parameter', 'value')
@@ -73,32 +65,36 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=100)
-    shop = serializers.CharField(max_length=50)
-    price = serializers.IntegerField(min_value=0)
-    sum_value = serializers.IntegerField(min_value=0)
+    name = serializers.CharField(read_only=True)
+    shop = serializers.CharField(read_only=True)
+    price = serializers.IntegerField(min_value=0, read_only=True)
+    quantity_in_stock = serializers.IntegerField(read_only=True)
+    sum_value = serializers.IntegerField(min_value=0, read_only=True)
 
     class Meta:
         model = Order
-        fields = ('id', 'name', 'shop', 'price', 'quantity', 'sum_value')
-
-    def update(self, instance, validated_data):
-        pass
+        fields = ('id', 'name', 'shop', 'price', 'quantity_in_stock', 'quantity', 'sum_value')
 
 
-class OrderQuantityUpdateSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(required=False)
-    # product_info = serializers.IntegerField(required=False)
-    quantity = serializers.IntegerField(required=True, min_value=1)
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = '__all__'
+
+
+class ThanksForOrderSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    name = serializers.CharField(read_only=True)
+    shop = serializers.CharField(read_only=True)
+    price = serializers.IntegerField(min_value=0, read_only=True)
+    sum_value = serializers.IntegerField(min_value=0, read_only=True)
+    email = serializers.EmailField()
+    phone = serializers.CharField(read_only=True)
+    street = serializers.CharField(read_only=True)
+    house = serializers.CharField(read_only=True)
+
 
     class Meta:
         model = Order
-        fields = ('id', 'user', 'quantity')
+        fields = ('id', 'name', 'shop', 'price', 'quantity', 'sum_value', 'user', 'email', 'phone', 'street', 'house')
 
-
-class OrderListSerializer(serializers.ModelSerializer):
-    order = OrderSerializer(many=True)
-
-    class Meta:
-        model = OrderList
-        fields = ()
