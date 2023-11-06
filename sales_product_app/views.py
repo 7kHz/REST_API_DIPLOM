@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
-from django.db.models import F, Sum, Q
+from django.db.models import F, Sum, Count
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404
 from rest_framework.authentication import TokenAuthentication
@@ -13,7 +15,7 @@ from rest_framework import viewsets
 
 from .models import ProductInfo, Shop, Category, Product, Parameter, ProductParameter, Order, Contact
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
-    OrderSerializer, ContactSerializer, ThanksForOrderSerializer
+    OrderSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer
 
 
 # Create your views here.
@@ -24,6 +26,14 @@ def account_activation(request, uid, token):
         'token': token
     }
     return render(request, 'account_activation.html', context)
+
+
+# def create_order(user_id, product_info_id, product):
+#     order_count = Order.objects.filter(product_info_id=product_info_id).count()
+#     if order_count >= 1:
+#         return Response(f"{product} уже в корзине")
+#     Order.objects.create(user_id=user_id, product_info_id=product_info_id)
+#     return Response(f"{product} добавлен в Корзину")
 
 
 class ShopView(ListAPIView):
@@ -77,7 +87,7 @@ class ProductInfoView(APIView):
         return Response(serializer.data)
 
 
-class BasketView(APIView):
+class OrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -146,6 +156,8 @@ class ContactView(APIView):
         serializer.is_valid(raise_exception=True)
         if serializer.save():
             self.update_order_status(request.user.id, 'New')
+            # OrderListView.create_order_number(self.request.user.id)
+            # order_number = Order.objects.filter(user_id=request.user.id, status='New').values('order_number')
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
@@ -181,7 +193,9 @@ class ThanksForOrderView(APIView):
         pk = kwargs.get('pk')
         if pk:
             return Response("{'Error': 'Method GET not allowed'}")
-        product_info = Order.objects.filter(user_id=request.user.id, ).select_related('product_info')
+        current_date = datetime.now().date()
+        product_info = Order.objects.filter(user_id=request.user.id, status='New',
+                                            date=current_date).select_related('product_info')
         product_info = product_info.annotate(name=F('product_info__name'),
                                              shop=F('product_info__shop__name'),
                                              price=F('product_info__retail_price'),
@@ -193,14 +207,38 @@ class ThanksForOrderView(APIView):
         return Response(ThanksForOrderSerializer(product_info, many=True).data)
 
 
-class OrderView(APIView):
-    search_fields = ['status']
+class OrderListView(APIView):
     permission_classes = [IsAuthenticated]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['status']
 
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk')
-        if pk:
-            queryset = Order.objects.filter(user_id=request.user.id, pk=pk)
-            return Response(OrderSerializer(queryset).data)
-        queryset = Order.objects.filter(user_id=request.user.id)
-        return Response(OrderSerializer(queryset, many=True).data)
+    def create_order_number(self, user_id):
+        orders = Order.objects.filter(user_id=user_id).values('user_id', 'date', 'status').annotate().distinct()
+        for i, v in enumerate(orders):
+            v['id'] = i + 1
+            Order.objects.filter(user_id=v['user_id'], date=v['date'], status=v['status']). \
+                update(order_number=f"{user_id}-{v['id']}")
+        # orders = orders.filter(user_id=user_id)
+        # return Response(OrderListSerializer(orders, many=True).data)
+
+        # self.create_order_number()
+
+    def get(self, request, order_number):
+        if order_number:
+            try:
+                order = Order.objects.filter(user_id=request.user.id, order_number=order_number).\
+                    annotate(name=F('product_info__name'),
+                                       shop=F('product_info__shop__name'),
+                                       price=F('product_info__retail_price'),
+                                       sum_value=Sum(F('product_info__retail_price') * F('quantity')),
+                                       email=F('user__email'),
+                                       phone=F('user__contacts__phone'),
+                                       street=F('user__contacts__street'),
+                                       house=F('user__contacts__house'))
+            except:
+                return Response({'Error': 'Object doest not exist'})
+            return Response(OrderDetailSerializer(order, many=True).data)
+        orders = Order.objects.filter(user_id=request.user.id).values('user_id', 'date', 'status', 'order_number'). \
+            annotate(sum_=Sum(F('product_info__price') * F('quantity'))).distinct()
+        self.create_order_number(request.user.id)
+        return Response(OrderListSerializer(orders, many=True).data)

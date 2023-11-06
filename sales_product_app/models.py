@@ -146,37 +146,23 @@ class Parameter(models.Model):
     def __str__(self):
         return self.name
 
-
-# class OrderList(models.Model):
-#     quantity = models.PositiveIntegerField(verbose_name='Количество')
-#     shop_id = models.PositiveIntegerField(verbose_name='Магазины')
-#     product_id = models.PositiveIntegerField(verbose_name='Продукты')
-#     order_id = models.PositiveIntegerField(verbose_name='Заказ')
-#
-#     class Meta:
-#         verbose_name = 'Заказанная позиция'
-#         verbose_name_plural = 'Список заказанных позиций'
+    class Meta:
+        verbose_name = 'Заказанная позиция'
+        verbose_name_plural = 'Список заказанных позиций'
 
 
 class Order(models.Model):
+    user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
     date = models.DateField(verbose_name='Дата заказа', auto_now_add=True)
     status = models.CharField(max_length=30, choices=STATE_CHOICES, verbose_name='Статус', default='basket')
     quantity = models.PositiveIntegerField(verbose_name='Количество', default=1)
-    user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
                                      related_name='orders', on_delete=models.CASCADE)
-    order_list = models.ForeignKey('Order_list', verbose_name='Список заказов', related_name='orders_list',
-                                   on_delete=models.CASCADE)
+    order_number = models.CharField(verbose_name='Номер заказа', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
-
-class Order_list(models.Model):
-    user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='order_list',
-                             on_delete=models.CASCADE)
-    date = models.DateField(verbose_name='Дата заказа', blank=True)
-
 
 
 class Contact(models.Model):
@@ -196,6 +182,3 @@ class Contact(models.Model):
 
     def __str__(self):
         return f'{self.city} {self.street} {self.house}'
-
-
-

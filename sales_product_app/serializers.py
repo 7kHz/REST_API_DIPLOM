@@ -93,8 +93,30 @@ class ThanksForOrderSerializer(serializers.ModelSerializer):
     street = serializers.CharField(read_only=True)
     house = serializers.CharField(read_only=True)
 
-
     class Meta:
         model = Order
         fields = ('id', 'name', 'shop', 'price', 'quantity', 'sum_value', 'user', 'email', 'phone', 'street', 'house')
 
+
+class OrderListSerializer(serializers.ModelSerializer):
+    sum_ = serializers.IntegerField(min_value=0)
+
+    class Meta:
+        model = Order
+        fields = ('order_number', 'user_id', 'date', 'sum_', 'status',)
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    name = serializers.CharField(read_only=True)
+    shop = serializers.CharField(read_only=True)
+    price = serializers.IntegerField(min_value=0, read_only=True)
+    sum_value = serializers.IntegerField(min_value=0, read_only=True)
+    email = serializers.EmailField()
+    phone = serializers.CharField(read_only=True)
+    street = serializers.CharField(read_only=True)
+    house = serializers.CharField(read_only=True)
+    class Meta:
+        model = Order
+        fields = ('order_number', 'date', 'status', 'name', 'shop', 'price', 'quantity',
+                  'sum_value', 'user', 'email', 'phone', 'street', 'house')

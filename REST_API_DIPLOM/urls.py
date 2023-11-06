@@ -20,8 +20,8 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
-from sales_product_app.views import ShopView, CategoryView, ProductInfoView, ProductViewSet, BasketView, \
-    account_activation, ContactView, ThanksForOrderView, OrderView
+from sales_product_app.views import ShopView, CategoryView, ProductInfoView, ProductViewSet, OrderView, \
+    account_activation, ContactView, ThanksForOrderView, OrderListView
 
 
 router = DefaultRouter()
@@ -36,12 +36,12 @@ urlpatterns = [
     path('api/v1/shops/', ShopView.as_view(), name='shops-list'),
     path('api/v1/categories/', CategoryView.as_view(), name='category-list'),
     path('api/v1/products/<int:product_id>/detail/', ProductInfoView.as_view(), name='productinfo-detail'),
-    path('api/v1/basket/', BasketView.as_view(), name='basket'),
-    path('api/v1/basket/<int:pk>/', BasketView.as_view(), name='order-update'),
+    path('api/v1/basket/', OrderView.as_view(), name='basket'),
+    path('api/v1/basket/<int:pk>/', OrderView.as_view(), name='order-update'),
     path('api/v1/contact/', ContactView.as_view(), name='contact'),
     path('api/v1/contact/<int:pk>/', ContactView.as_view(), name='contact-detail'),
     path('api/v1/thanks-for-order/', ThanksForOrderView.as_view(), name='thanks-for-order'),
-    # path('api/v1/orders/', OrderView.as_view(), name='order-detail'),
-    # path('api/v1/orders/<int:pk>/', OrderView.as_view(), name='order-detail'),
+    path('api/v1/order-list/', OrderListView.as_view(), name='order-list'),
+    path('api/v1/order-list/<str:order_number>/', OrderListView.as_view(), name='order-detail'),
     path('activate/<str:uid>/<str:token>/', account_activation, name='account_activation_success')
 ]

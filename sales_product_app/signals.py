@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from djoser.signals import user_registered
 from django.conf import settings
 
-from .models import Order, Contact
+from .models import Contact
 
 
 @receiver(user_registered)
