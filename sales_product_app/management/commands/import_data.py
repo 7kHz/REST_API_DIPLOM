@@ -2,7 +2,7 @@ import yaml
 from django.core.management import BaseCommand
 from django.db.models import F
 
-from sales_product_app.models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter
+from sales_product_app.models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser
 
 
 class Command(BaseCommand):
@@ -22,12 +22,9 @@ class Command(BaseCommand):
             for category in data['categories']:
                 Category.objects.get_or_create(id=category['id'], name=category['name'])
             smartphones, accessories, flash_storage = Category.objects.filter(id__in=[224, 15, 1])
-            # Category.objects.get_or_create(id=4, name='Бытовая техника')
-            # home_appliances = Category.objects.all()[3]
             smartphones.shops.set([svyaznoy])
             accessories.shops.set([svyaznoy])
             flash_storage.shops.set([mvideo])
-            # home_appliances.shops.add(mvideo)
             for product in data['goods']:
                 Product.objects.get_or_create(id=product['id'],
                                               category_id=product['category'],

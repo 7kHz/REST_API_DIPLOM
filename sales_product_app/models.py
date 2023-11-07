@@ -67,7 +67,7 @@ class Shop(models.Model):
     filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
     user = models.OneToOneField(CustomUser, max_length=50, verbose_name='Пользователь',
                                 blank=True, null=True, on_delete=models.CASCADE)
-    status = models.BooleanField(verbose_name='Статус получения заказов', default=True)
+    is_active = models.BooleanField(verbose_name='Статус получения заказов', default=True)
 
     class Meta:
         verbose_name = 'Магазин'
@@ -114,8 +114,8 @@ class ProductInfo(models.Model):
     basket = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = 'Продукт_инфо'
-        verbose_name_plural = 'Продукты_инфо'
+        verbose_name = 'Информация о продукте'
+        verbose_name_plural = 'Информация о продуктах'
 
     def __str__(self):
         return self.name
@@ -146,10 +146,6 @@ class Parameter(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name = 'Заказанная позиция'
-        verbose_name_plural = 'Список заказанных позиций'
-
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, verbose_name='Пользователь', related_name='orders', on_delete=models.CASCADE)
@@ -158,11 +154,14 @@ class Order(models.Model):
     quantity = models.PositiveIntegerField(verbose_name='Количество', default=1)
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
                                      related_name='orders', on_delete=models.CASCADE)
-    order_number = models.CharField(verbose_name='Номер заказа', blank=True, null=True)
+    order_number = models.CharField(verbose_name='Номер заказа', blank=True)
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+
+    def __str__(self):
+        return self.order_number
 
 
 class Contact(models.Model):

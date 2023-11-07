@@ -140,13 +140,13 @@ AUTH_USER_MODEL = 'sales_product_app.CustomUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST = 'smtp.yandex.ru'  # Replace with your SMTP server address
-EMAIL_PORT = 465  # Replace with the appropriate port for your email provider
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'guitarheroe2012@ya.ru'  # Replace with your email address
-EMAIL_HOST_PASSWORD = 'pfbxihqokmpgjpdq'  # Replace with your email password
+EMAIL_HOST_USER = 'guitarheroe2012@ya.ru'
+EMAIL_HOST_PASSWORD = 'pfbxihqokmpgjpdq'
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Replace with your email address
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 DJOSER = {

@@ -21,7 +21,7 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from sales_product_app.views import ShopView, CategoryView, ProductInfoView, ProductViewSet, OrderView, \
-    account_activation, ContactView, ThanksForOrderView, OrderListView
+    account_activation, ContactView, ThanksForOrderView, OrderListView, ShopUpdateUser
 
 
 router = DefaultRouter()
@@ -31,6 +31,7 @@ app_name = 'sales_product_app'
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^auth/', include('djoser.urls.authtoken'), name='token-login-logout'),
+    path('activate/<str:uid>/<str:token>/', account_activation, name='account_activation_success'),
     path('api/v1/', include('djoser.urls'), name='user-create-password-reset'),
     path('api/v1/', include(router.urls)),
     path('api/v1/shops/', ShopView.as_view(), name='shops-list'),
@@ -43,5 +44,5 @@ urlpatterns = [
     path('api/v1/thanks-for-order/', ThanksForOrderView.as_view(), name='thanks-for-order'),
     path('api/v1/order-list/', OrderListView.as_view(), name='order-list'),
     path('api/v1/order-list/<str:order_number>/', OrderListView.as_view(), name='order-detail'),
-    path('activate/<str:uid>/<str:token>/', account_activation, name='account_activation_success')
+    path('api/v1/shop-update-user/', ShopUpdateUser.as_view(), name='update-supplier')
 ]

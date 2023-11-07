@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 
-from .models import ProductInfo, Shop, Category, Product, Parameter, ProductParameter, Order, Contact
+from .models import CustomUser, ProductInfo, Shop, Category, Product, Order, Contact
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
     OrderSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer
 
@@ -26,14 +26,6 @@ def account_activation(request, uid, token):
         'token': token
     }
     return render(request, 'account_activation.html', context)
-
-
-# def create_order(user_id, product_info_id, product):
-#     order_count = Order.objects.filter(product_info_id=product_info_id).count()
-#     if order_count >= 1:
-#         return Response(f"{product} уже в корзине")
-#     Order.objects.create(user_id=user_id, product_info_id=product_info_id)
-#     return Response(f"{product} добавлен в Корзину")
 
 
 class ShopView(ListAPIView):
@@ -156,8 +148,7 @@ class ContactView(APIView):
         serializer.is_valid(raise_exception=True)
         if serializer.save():
             self.update_order_status(request.user.id, 'New')
-            # OrderListView.create_order_number(self.request.user.id)
-            # order_number = Order.objects.filter(user_id=request.user.id, status='New').values('order_number')
+            OrderListView.create_order_number(self, self.request.user.id)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
@@ -213,28 +204,28 @@ class OrderListView(APIView):
     ordering_fields = ['status']
 
     def create_order_number(self, user_id):
-        orders = Order.objects.filter(user_id=user_id).values('user_id', 'date', 'status').annotate().distinct()
+        orders = Order.objects.filter(user_id=user_id, status='New').values('user_id', 'date',
+                                                                            'status').annotate().distinct()
         for i, v in enumerate(orders):
             v['id'] = i + 1
             Order.objects.filter(user_id=v['user_id'], date=v['date'], status=v['status']). \
                 update(order_number=f"{user_id}-{v['id']}")
         # orders = orders.filter(user_id=user_id)
         # return Response(OrderListSerializer(orders, many=True).data)
-
         # self.create_order_number()
 
     def get(self, request, order_number):
         if order_number:
             try:
-                order = Order.objects.filter(user_id=request.user.id, order_number=order_number).\
+                order = Order.objects.filter(user_id=request.user.id, order_number=order_number). \
                     annotate(name=F('product_info__name'),
-                                       shop=F('product_info__shop__name'),
-                                       price=F('product_info__retail_price'),
-                                       sum_value=Sum(F('product_info__retail_price') * F('quantity')),
-                                       email=F('user__email'),
-                                       phone=F('user__contacts__phone'),
-                                       street=F('user__contacts__street'),
-                                       house=F('user__contacts__house'))
+                             shop=F('product_info__shop__name'),
+                             price=F('product_info__retail_price'),
+                             sum_value=Sum(F('product_info__retail_price') * F('quantity')),
+                             email=F('user__email'),
+                             phone=F('user__contacts__phone'),
+                             street=F('user__contacts__street'),
+                             house=F('user__contacts__house'))
             except:
                 return Response({'Error': 'Object doest not exist'})
             return Response(OrderDetailSerializer(order, many=True).data)
@@ -242,3 +233,19 @@ class OrderListView(APIView):
             annotate(sum_=Sum(F('product_info__price') * F('quantity'))).distinct()
         self.create_order_number(request.user.id)
         return Response(OrderListSerializer(orders, many=True).data)
+
+
+class ShopUpdateUser(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            response = ''
+            suppliers = CustomUser.objects.filter(type='supplier').values('id', 'first_name', 'last_name', 'company')
+            for supplier in suppliers:
+                Shop.objects.filter(name=supplier['company']).update(user_id=supplier['id'])
+                response += f"Поставщик {supplier['first_name']} {supplier['last_name']} " \
+                            f"прикреплен к магазину '{Shop.objects.filter(name=supplier['company'])[0]}'\n"
+            return Response(response)
+        except:
+            return Response({'Error': 'Supplier or Shop does not exists'})
