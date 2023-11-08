@@ -72,6 +72,7 @@ class BasketSerializer(serializers.ModelSerializer):
     price = serializers.IntegerField(min_value=0, read_only=True)
     quantity_in_stock = serializers.IntegerField(read_only=True)
     sum_value = serializers.IntegerField(min_value=0, read_only=True)
+    quantity = serializers.IntegerField(required=True)
 
     class Meta:
         model = Order
@@ -113,12 +114,12 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     shop = serializers.CharField(read_only=True)
     price = serializers.IntegerField(min_value=0, read_only=True)
-    sum_value = serializers.IntegerField(min_value=0, read_only=True)
-    email = serializers.EmailField()
+    sum_ = serializers.IntegerField(min_value=0, read_only=True)
+    email = serializers.EmailField(read_only=True)
     phone = serializers.CharField(read_only=True)
     street = serializers.CharField(read_only=True)
     house = serializers.CharField(read_only=True)
     class Meta:
         model = Order
         fields = ('order_number', 'date', 'status', 'name', 'shop', 'price', 'quantity',
-                  'sum_value', 'user', 'email', 'phone', 'street', 'house')
+                  'sum_', 'user', 'email', 'phone', 'street', 'house')

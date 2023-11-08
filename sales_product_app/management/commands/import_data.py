@@ -31,7 +31,7 @@ class Command(BaseCommand):
                                               name=product['name'])
                 ProductInfo.objects.get_or_create(product_id=product['id'],
                                                   name=product['name'],
-                                                  quantity=product['quantity'],
+                                                  quantity_in_stock=product['quantity'],
                                                   price=product['price'],
                                                   retail_price=product['price_rrc'])
                 for key, value in product['parameters'].items():

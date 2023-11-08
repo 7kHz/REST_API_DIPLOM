@@ -127,8 +127,11 @@ class BasketView(APIView):
         except:
             return Response('Object does not exist')
         serializer = BasketSerializer(data=request.data, instance=instance)
-        if int(request.data['quantity']) > instance.product_info.quantity_in_stock:
-            return Response(f"Количество товара '{instance.product_info.name}' превышает наличие на складе")
+        try:
+            if int(request.data['quantity']) > instance.product_info.quantity_in_stock:
+                return Response(f"Данное число превышает количество товара '{instance.product_info.name}' на складе")
+        except KeyError:
+            return Response({'Error': 'Введите число для изменения количества товара'})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(f"Количество товара '{instance.product_info.name}' изменено на "
@@ -143,15 +146,11 @@ class BasketView(APIView):
         except:
             return Response('Object does not exist')
         instance.delete()
-        return Response(f'Товар №{pk} удален из Корзины')
+        return Response(f'Товар {instance.product_info.name} удален из Корзины')
 
 
 class ContactView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def update_order_status(self, user_id, status):
-        Order.objects.filter(user_id=user_id).update(status=status)
-        return Response(f'Статус заказа изменен на {status}')
 
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
@@ -160,7 +159,10 @@ class ContactView(APIView):
         queryset = Contact.objects.filter(user_id=request.user.id)
         return Response(ContactSerializer(queryset, many=True).data)
 
-    def post(self, request):
+    def post(self, request, **kwargs):
+        pk = kwargs.get('pk')
+        if pk:
+            return Response({'Error': 'Method POST not allowed'})
         contact_count = Contact.objects.filter(user_id=request.user.id).count()
         if contact_count >= 1:
             return Response('Количество адресов не может быть более 1')
@@ -170,9 +172,8 @@ class ContactView(APIView):
             data[key] = value
         serializer = ContactSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        if serializer.save():
-            self.update_order_status(request.user.id, 'New')
-            OrderListView.create_order_number(self, self.request.user.id)
+        OrderListView.update_order_new(self, self.request.user.id)
+        serializer.save()
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
@@ -186,7 +187,7 @@ class ContactView(APIView):
         serializer = ContactSerializer(data=request.data, instance=instance)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(f'Контактные данные №{pk} успешно изменены')
+        return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
@@ -196,9 +197,9 @@ class ContactView(APIView):
             instance = Contact.objects.filter(user_id=request.user.id).get(pk=pk)
         except:
             return Response('Object does not exist')
-        if instance.delete():
-            self.update_order_status(request.user.id, 'Canceled')
-        return Response(f'Контактные данные №{pk} успешно удалены')
+        OrderListView.update_order_canceled(self, request.user.id)
+        instance.delete()
+        return Response(f'Контактные данные {instance.user} успешно удалены')
 
 
 class ThanksForOrderView(APIView):
@@ -209,12 +210,12 @@ class ThanksForOrderView(APIView):
         if pk:
             return Response("{'Error': 'Method GET not allowed'}")
         current_date = datetime.now().date()
-        product_info = Order.objects.filter(user_id=request.user.id, status='New',
+        product_info = Order.objects.filter(user_id=request.user.id, status='new',
                                             date=current_date).select_related('product_info')
         product_info = product_info.annotate(name=F('product_info__name'),
                                              shop=F('product_info__shop__name'),
                                              price=F('product_info__retail_price'),
-                                             sum_value=Sum(F('product_info__price') * F('quantity')),
+                                             sum_value=Sum(F('product_info__retail_price') * F('quantity')),
                                              email=F('user__email'),
                                              phone=F('user__contacts__phone'),
                                              street=F('user__contacts__street'),
@@ -227,35 +228,35 @@ class OrderListView(APIView):
     filter_backends = [OrderingFilter]
     ordering_fields = ['status']
 
-    def create_order_number(self, user_id):
-        orders = Order.objects.filter(user_id=user_id, status='New').values('user_id', 'date',
-                                                                            'status').annotate().distinct()
+    def update_order_new(self, user_id):
+        Order.objects.filter(user_id=user_id, status='basket').update(status='new')
+        orders = Order.objects.filter(user_id=user_id, status='new').values('user_id', 'date').annotate().distinct()
         for i, v in enumerate(orders):
             v['id'] = i + 1
-            Order.objects.filter(user_id=v['user_id'], date=v['date'], status=v['status']). \
+            Order.objects.filter(user_id=v['user_id'], date=v['date']). \
                 update(order_number=f"{user_id}-{v['id']}")
-        # orders = orders.filter(user_id=user_id)
-        # return Response(OrderListSerializer(orders, many=True).data)
-        # self.create_order_number()
 
-    def get(self, request, order_number):
+    def update_order_canceled(self, user_id):
+        try:
+            Order.objects.filter(user_id=user_id).exclude(status='basket').update(status='canceled')
+        except:
+            return Response('Object does not exist')
+
+    def get(self, request, **kwargs):
+        order_number = kwargs.get('order_number')
         if order_number:
-            try:
-                order = Order.objects.filter(user_id=request.user.id, order_number=order_number). \
-                    annotate(name=F('product_info__name'),
-                             shop=F('product_info__shop__name'),
-                             price=F('product_info__retail_price'),
-                             sum_value=Sum(F('product_info__retail_price') * F('quantity')),
-                             email=F('user__email'),
-                             phone=F('user__contacts__phone'),
-                             street=F('user__contacts__street'),
-                             house=F('user__contacts__house'))
-            except:
-                return Response({'Error': 'Object doest not exist'})
+            order = Order.objects.filter(user_id=request.user.id, order_number=order_number). \
+                annotate(name=F('product_info__name'),
+                         shop=F('product_info__shop__name'),
+                         price=F('product_info__retail_price'),
+                         sum_=Sum(F('product_info__retail_price') * F('quantity')),
+                         email=F('user__email'),
+                         phone=F('user__contacts__phone'),
+                         street=F('user__contacts__street'),
+                         house=F('user__contacts__house'))
             return Response(OrderDetailSerializer(order, many=True).data)
         orders = Order.objects.filter(user_id=request.user.id).values('user_id', 'date', 'status', 'order_number'). \
-            annotate(sum_=Sum(F('product_info__price') * F('quantity'))).distinct()
-        # self.create_order_number(request.user.id)
+            annotate(sum_=Sum(F('product_info__retail_price') * F('quantity'))).distinct()
         return Response(OrderListSerializer(orders, many=True).data)
 
 
@@ -263,6 +264,8 @@ class ShopUpdateUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
+        if request.user.type != 'supplier':
+            return Response({'Error': 'Only for suppliers'})
         try:
             response = {}
             suppliers = CustomUser.objects.filter(type='supplier').values('id', 'username', 'company')
@@ -278,10 +281,18 @@ class ShopUpdateUserView(APIView):
 class SupplierOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, **kwargs):
+        order_number = kwargs.get('order_number')
         if request.user.type != 'supplier':
             return Response({'Error': 'Only for suppliers'})
-        order = Order.objects.filter(product_info__shop__user_id=request.user.id).\
-            select_related('product_info__shop').exclude(status='Basket').\
+        if order_number:
+            try:
+                order = Order.objects.filter(order_number=order_number).annotate(name=F('product_info__name'),
+                                                                                 price=F('product_info__price'))
+                return Response(OrderDetailSerializer(order, many=True).data)
+            except:
+                return Response('Object does not exist')
+        order = Order.objects.filter(product_info__shop__user_id=request.user.id). \
+            select_related('product_info__shop').exclude(status='Basket'). \
             annotate(sum_=Sum(F('product_info__price') * F('quantity')))
         return Response(OrderListSerializer(order, many=True).data)

@@ -43,8 +43,9 @@ urlpatterns = [
     path('api/v1/contact/', ContactView.as_view(), name='contact'),
     path('api/v1/contact/<int:pk>/', ContactView.as_view(), name='contact-detail'),
     path('api/v1/thanks-for-order/', ThanksForOrderView.as_view(), name='thanks-for-order'),
-    path('api/v1/order-list/', OrderListView.as_view(), name='order-list'),
-    path('api/v1/order-list/<str:order_number>/', OrderListView.as_view(), name='order-detail'),
+    path('api/v1/orders/', OrderListView.as_view(), name='orders'),
+    path('api/v1/orders/<str:order_number>/', OrderListView.as_view(), name='order-detail'),
     path('api/v1/shops-update-user/', ShopUpdateUserView.as_view(), name='supplier-status-update'),
-    path('api/v1/supplier-orders/', SupplierOrdersView.as_view(), name='supplier-orders')
+    path('api/v1/supplier-orders/', SupplierOrdersView.as_view(), name='supplier-orders'),
+    path('api/v1/supplier-orders/<str:order_number>/', SupplierOrdersView.as_view(), name='supplier-orders-detail')
 ]
