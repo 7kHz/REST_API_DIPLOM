@@ -161,7 +161,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return self.order_number
+        return self.product_info.name
 
 
 class Contact(models.Model):

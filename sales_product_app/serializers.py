@@ -13,9 +13,11 @@ class CustomUserSerializer(UserCreateSerializer):
 
 
 class ShopSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=False)
+    is_active = serializers.BooleanField()
     class Meta:
         model = Shop
-        fields = ('id', 'name', 'url', 'status')
+        fields = ('id', 'name', 'url', 'is_active')
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -64,7 +66,7 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket')
 
 
-class OrderSerializer(serializers.ModelSerializer):
+class BasketSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     shop = serializers.CharField(read_only=True)
     price = serializers.IntegerField(min_value=0, read_only=True)

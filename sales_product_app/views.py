@@ -15,7 +15,7 @@ from rest_framework import viewsets
 
 from .models import CustomUser, ProductInfo, Shop, Category, Product, Order, Contact
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
-    OrderSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer
+    BasketSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer
 
 
 # Create your views here.
@@ -29,9 +29,28 @@ def account_activation(request, uid, token):
 
 
 class ShopView(ListAPIView):
-    queryset = Shop.objects.all()
-    serializer_class = ShopSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        if pk:
+            shops = Shop.objects.filter(pk=pk)
+            return Response(ShopSerializer(shops, many=True).data)
+        shops = Shop.objects.all()
+        return Response(ShopSerializer(shops, many=True).data)
+
+    def put(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        if not pk:
+            return Response({'Error': 'Method PUT not allowed'})
+        try:
+            instance = Shop.objects.get(pk=pk)
+        except:
+            return Response({'Error': 'Object does not exists'})
+        serializer = ShopSerializer(data=request.data, instance=instance)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CategoryView(ListAPIView):
@@ -60,7 +79,12 @@ class ProductInfoView(APIView):
         return Response(f"{product} добавлен в Корзину Пользователя (user_id: {user_id})")
 
     def get(self, request, product_id):
-        product_info = ProductInfo.objects.get(product_id=product_id)
+        if not product_id:
+            return Response({'Error': 'Method GET not allowed'})
+        try:
+            product_info = ProductInfo.objects.get(product_id=product_id)
+        except:
+            return Response({'Error': 'Object does not exists'})
         return Response(ProductInfoSerializer(product_info).data)
 
     def put(self, request, *args, **kwargs):
@@ -79,7 +103,7 @@ class ProductInfoView(APIView):
         return Response(serializer.data)
 
 
-class OrderView(APIView):
+class BasketView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -92,7 +116,7 @@ class OrderView(APIView):
                                      price=F('product_info__retail_price'),
                                      quantity_in_stock=F('product_info__quantity_in_stock'),
                                      sum_value=Sum(F('product_info__retail_price') * F('quantity')))
-        return Response(OrderSerializer(queryset, many=True).data)
+        return Response(BasketSerializer(queryset, many=True).data)
 
     def put(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
@@ -102,7 +126,7 @@ class OrderView(APIView):
             instance = Order.objects.filter(user_id=request.user.id).get(pk=pk)
         except:
             return Response('Object does not exist')
-        serializer = OrderSerializer(data=request.data, instance=instance)
+        serializer = BasketSerializer(data=request.data, instance=instance)
         if int(request.data['quantity']) > instance.product_info.quantity_in_stock:
             return Response(f"Количество товара '{instance.product_info.name}' превышает наличие на складе")
         serializer.is_valid(raise_exception=True)
@@ -231,21 +255,33 @@ class OrderListView(APIView):
             return Response(OrderDetailSerializer(order, many=True).data)
         orders = Order.objects.filter(user_id=request.user.id).values('user_id', 'date', 'status', 'order_number'). \
             annotate(sum_=Sum(F('product_info__price') * F('quantity'))).distinct()
-        self.create_order_number(request.user.id)
+        # self.create_order_number(request.user.id)
         return Response(OrderListSerializer(orders, many=True).data)
 
 
-class ShopUpdateUser(APIView):
+class ShopUpdateUserView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def put(self, request):
         try:
-            response = ''
-            suppliers = CustomUser.objects.filter(type='supplier').values('id', 'first_name', 'last_name', 'company')
+            response = {}
+            suppliers = CustomUser.objects.filter(type='supplier').values('id', 'username', 'company')
             for supplier in suppliers:
                 Shop.objects.filter(name=supplier['company']).update(user_id=supplier['id'])
-                response += f"Поставщик {supplier['first_name']} {supplier['last_name']} " \
-                            f"прикреплен к магазину '{Shop.objects.filter(name=supplier['company'])[0]}'\n"
+                response[f"Поставщик (username: '{supplier['username']}') прикреплен к магазину"] = \
+                    f"{Shop.objects.filter(name=supplier['company'])[0]}"
             return Response(response)
         except:
             return Response({'Error': 'Supplier or Shop does not exists'})
+
+
+class SupplierOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.type != 'supplier':
+            return Response({'Error': 'Only for suppliers'})
+        order = Order.objects.filter(product_info__shop__user_id=request.user.id).\
+            select_related('product_info__shop').exclude(status='Basket').\
+            annotate(sum_=Sum(F('product_info__price') * F('quantity')))
+        return Response(OrderListSerializer(order, many=True).data)
