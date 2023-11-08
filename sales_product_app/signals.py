@@ -4,7 +4,6 @@ from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from djoser.signals import user_registered
 from django.conf import settings
-from django.contrib import admin
 from rest_framework.response import Response
 
 from .models import Contact, Order

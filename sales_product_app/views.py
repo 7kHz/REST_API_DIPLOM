@@ -1,13 +1,8 @@
 from datetime import datetime
-
-from django.contrib.auth import get_user_model
 from django.db.models import F, Sum, Count
-from django.http import Http404
 from django.shortcuts import render, get_object_or_404
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveAPIView, \
-    RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView, UpdateAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
