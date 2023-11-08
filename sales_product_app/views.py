@@ -35,11 +35,13 @@ class ShopView(ListAPIView):
         return Response(ShopSerializer(shops, many=True).data)
 
     def put(self, request, *args, **kwargs):
+        if request.user.type != 'supplier':
+            return Response({'Error': 'Only for suppliers'})
         pk = kwargs.get('pk')
         if not pk:
             return Response({'Error': 'Method PUT not allowed'})
         try:
-            instance = Shop.objects.get(pk=pk)
+            instance = Shop.objects.filter(user_id=request.user.id).get(pk=pk)
         except:
             return Response({'Error': 'Object does not exists'})
         serializer = ShopSerializer(data=request.data, instance=instance)
