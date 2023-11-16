@@ -143,8 +143,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'example@ya.ru'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'guitarheroe2012@ya.ru'
+EMAIL_HOST_PASSWORD = 'pfbxihqokmpgjpdq'
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
@@ -157,7 +157,9 @@ DJOSER = {
     'SEND_CONFIRMATION_EMAIL': True,
     # 'SEND_PASSWORD_CHANGED_EMAIL': True,
     # 'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
-    # 'USERNAME_RESET_CONFIRM_URL': 'username/reset/confirm/{uid}/{token}',
     'ACTIVATION_URL': 'activate/{uid}/{token}',
     'CONFIRMATION_URL': 'confirm/{uid}/{token}',
 }
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_BACKEND = 'redis://127.0.0.1:6379'

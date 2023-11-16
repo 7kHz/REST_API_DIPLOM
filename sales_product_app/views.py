@@ -161,8 +161,8 @@ class ContactView(APIView):
         if pk:
             return Response({'Error': 'Method POST not allowed'})
         contact_count = Contact.objects.filter(user_id=request.user.id).count()
-        if contact_count >= 1:
-            return Response('Количество адресов не может быть более 1')
+        if contact_count >= 10:
+            return Response('Количество адресов не может быть более 10')
         data = {'user': request.user.id}
         for key, value in request.data.items():
             value = str(value)

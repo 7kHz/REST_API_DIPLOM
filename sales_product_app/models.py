@@ -47,7 +47,7 @@ class CustomUser(AbstractUser):
 class Shop(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название')
     url = models.URLField(blank=True, max_length=100)
-    filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
+    # filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
     user = models.OneToOneField(CustomUser, max_length=50, verbose_name='Пользователь',
                                 blank=True, null=True, on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name='Статус получения заказов', default=True)

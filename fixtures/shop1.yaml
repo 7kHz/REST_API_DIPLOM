@@ -3,7 +3,7 @@ shop:
     name: Связной
     url: https://www.svyaznoy.ru
   - id: 2
-    name: М.видео
+    name: М.Видео
     url: https://www.mvideo.ru
 categories:
   - id: 224
