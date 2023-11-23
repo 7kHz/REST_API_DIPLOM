@@ -1,6 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from imagekit.models import ImageSpecField, ProcessedImageField
+from imagekit.processors import ResizeToFill, TrimBorderColor
 
 STATE_CHOICES = (
     ('basket', 'Статус корзины'),
@@ -31,6 +33,8 @@ class CustomUser(AbstractUser):
     company = models.CharField(max_length=50, verbose_name='Компания')
     position = models.CharField(max_length=30, verbose_name='Должность')
     type = models.CharField(max_length=10, verbose_name='Тип пользователя', choices=USER_TYPE_CHOICES, default='buyer')
+    thumbnail = ProcessedImageField(upload_to='images', processors=[ResizeToFill(800, 800)], format='JPEG',
+                                    options={'quality': 100}, blank=True, verbose_name='Изображение профиля')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
@@ -47,7 +51,6 @@ class CustomUser(AbstractUser):
 class Shop(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название')
     url = models.URLField(blank=True, max_length=100)
-    # filename = models.CharField(max_length=50, blank=True, verbose_name='Имя_файла')
     user = models.OneToOneField(CustomUser, max_length=50, verbose_name='Пользователь',
                                 blank=True, null=True, on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name='Статус получения заказов', default=True)
@@ -94,6 +97,8 @@ class ProductInfo(models.Model):
                                 related_name='product_name', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, blank=True, null=True, verbose_name='Магазины',
                              related_name='productinfo_shop', on_delete=models.CASCADE)
+    thumbnail = ProcessedImageField(upload_to='images', processors=[ResizeToFill(800, 800)], format='JPEG',
+                                    options={'quality': 100}, blank=True)
     basket = models.BooleanField(default=False)
 
     class Meta:

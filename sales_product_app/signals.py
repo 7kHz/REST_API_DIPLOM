@@ -1,15 +1,11 @@
 from time import sleep
-
-from django.core.mail import send_mail
 from django.db.models import F
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from djoser.signals import user_registered
 from django.conf import settings
-from rest_framework.response import Response
-
-from .models import Contact, Order
-from .tasks import send_email_status_new, send_registration_email_celery, send_email_status_canceled
+from .models import Contact, Order, CustomUser
+from .tasks import send_email_status_new, send_registration_email_async, send_email_status_canceled
 
 
 def get_supplier_email(user_id):
@@ -27,7 +23,7 @@ def get_order_number(user_id, status):
 
 @receiver(user_registered)
 def send_registration_email(sender, user, **kwargs):
-    send_registration_email_celery.delay(user.first_name, user.last_name, user.email)
+    send_registration_email_async.delay(user.first_name, user.last_name, user.email)
 
 
 @receiver(post_save, sender=Contact)

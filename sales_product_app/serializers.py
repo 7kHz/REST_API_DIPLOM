@@ -4,10 +4,11 @@ from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter,
 
 
 class CustomUserSerializer(UserCreateSerializer):
+    thumbnail = serializers.ImageField(required=True)
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name',
-                  'company', 'position', 'type')
+                  'company', 'position', 'type', 'thumbnail')
 
 
 class ShopSerializer(serializers.ModelSerializer):
@@ -54,14 +55,11 @@ class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
     basket = serializers.BooleanField(required=True)
     quantity = serializers.IntegerField(required=False)
     retail_price = serializers.IntegerField(required=False)
-
-    # basket = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
-
-    # url = serializers.HyperlinkedIdentityField(view_name='productinfo-detail', lookup_field='product_id')
-
+    # thumbnail = serializers.ImageField()
     class Meta:
         model = ProductInfo
-        fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket')
+        fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket',
+                  'thumbnail')
 
 
 class BasketSerializer(serializers.ModelSerializer):

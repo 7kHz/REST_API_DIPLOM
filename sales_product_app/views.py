@@ -1,16 +1,23 @@
 from datetime import datetime
+from time import sleep
+
 from django.db.models import F, Sum, Count
-from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework import viewsets
 
+from .forms import UserForm
 from .models import CustomUser, ProductInfo, Shop, Category, Product, Order, Contact
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
-    BasketSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer
+    BasketSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer, \
+    CustomUserSerializer
+from .tasks import create_user_async, upload_thumbnail_async
 
 
 # Create your views here.
@@ -23,7 +30,30 @@ def account_activation(request, uid, token):
     return render(request, 'account_activation.html', context)
 
 
+class UserView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, **kwargs):
+        pk = kwargs.get('pk')
+        if pk:
+            return Response({'Error': 'Method GET not allowed'})
+        users = CustomUser.objects.all()
+        return render(request, 'users-list.html', {'users': users})
+
+    # def post(self, request, **kwargs):
+    #     pk = kwargs.get('pk')
+    #     if pk:
+    #         return Response({'Error': 'Method POST not allowed'})
+    #     if request.data['thumbnail']:
+    #         create_user_async.delay(tuple(request.data))
+    #     serializer = CustomUserSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data)
+
+
 class ShopView(ListAPIView):
+    throttle_classes = [AnonRateThrottle]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
@@ -51,12 +81,14 @@ class ShopView(ListAPIView):
 
 
 class CategoryView(ListAPIView):
+    throttle_classes = [AnonRateThrottle]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class ProductViewSet(viewsets.ModelViewSet):
+    throttle_classes = [AnonRateThrottle]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [OrderingFilter, SearchFilter]
@@ -66,6 +98,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class ProductInfoView(APIView):
+    throttle_classes = [AnonRateThrottle]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def create_order(self, user_id, product_info_id, product):
@@ -83,6 +116,7 @@ class ProductInfoView(APIView):
         except:
             return Response({'Error': 'Object does not exists'})
         return Response(ProductInfoSerializer(product_info).data)
+        # return render(request, 'product_info.html', {'product_info': product_info})
 
     def put(self, request, *args, **kwargs):
         product_id = kwargs.get('product_id')
@@ -92,6 +126,8 @@ class ProductInfoView(APIView):
             instance = ProductInfo.objects.get(product_id=product_id)
         except:
             return Response({'Error': 'Object does not exists'})
+        if request.data.get('thumbnail'):
+            upload_thumbnail_async.delay(tuple(request.data), product_id)
         serializer = ProductInfoSerializer(data=request.data, instance=instance)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -101,6 +137,7 @@ class ProductInfoView(APIView):
 
 
 class BasketView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -147,6 +184,7 @@ class BasketView(APIView):
 
 
 class ContactView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -161,8 +199,8 @@ class ContactView(APIView):
         if pk:
             return Response({'Error': 'Method POST not allowed'})
         contact_count = Contact.objects.filter(user_id=request.user.id).count()
-        if contact_count >= 10:
-            return Response('Количество адресов не может быть более 10')
+        if contact_count >= 1:
+            return Response('Количество адресов не может быть более 1')
         data = {'user': request.user.id}
         for key, value in request.data.items():
             value = str(value)
@@ -200,6 +238,7 @@ class ContactView(APIView):
 
 
 class ThanksForOrderView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -221,6 +260,7 @@ class ThanksForOrderView(APIView):
 
 
 class OrderListView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
     filter_backends = [OrderingFilter]
     ordering_fields = ['status']
@@ -258,6 +298,7 @@ class OrderListView(APIView):
 
 
 class ShopUpdateUserView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
@@ -276,6 +317,7 @@ class ShopUpdateUserView(APIView):
 
 
 class SupplierOrdersView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, **kwargs):
