@@ -20,9 +20,8 @@ from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializ
 from .tasks import create_user_async, upload_thumbnail_async
 
 
-# Create your views here.
-
 def account_activation(request, uid, token):
+    """Активация пользователя"""
     context = {
         'uid': uid,
         'token': token
@@ -31,9 +30,11 @@ def account_activation(request, uid, token):
 
 
 class UserView(APIView):
+    """Класс для просмотра списка пользователей"""
     permission_classes = [IsAdminUser]
 
     def get(self, request, **kwargs):
+        """Список пользователей"""
         pk = kwargs.get('pk')
         if pk:
             return Response({'Error': 'Method GET not allowed'})
@@ -41,6 +42,7 @@ class UserView(APIView):
         return render(request, 'users-list.html', {'users': users})
 
     # def post(self, request, **kwargs):
+    # """Пример асинхронного создания пользователя через Celery"""
     #     pk = kwargs.get('pk')
     #     if pk:
     #         return Response({'Error': 'Method POST not allowed'})
@@ -53,10 +55,12 @@ class UserView(APIView):
 
 
 class ShopView(ListAPIView):
+    """Класс для работы со списком магазинов """
     throttle_classes = [AnonRateThrottle]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
+        """Получить магазин (список магазинов)"""
         pk = kwargs.get('pk')
         if pk:
             shops = Shop.objects.filter(pk=pk)
@@ -65,6 +69,7 @@ class ShopView(ListAPIView):
         return Response(ShopSerializer(shops, many=True).data)
 
     def put(self, request, *args, **kwargs):
+        """Изменить статус магазина"""
         if request.user.type != 'supplier':
             return Response({'Error': 'Only for suppliers'})
         pk = kwargs.get('pk')
@@ -81,6 +86,7 @@ class ShopView(ListAPIView):
 
 
 class CategoryView(ListAPIView):
+    """Класс для получения списка категорий"""
     throttle_classes = [AnonRateThrottle]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -88,6 +94,7 @@ class CategoryView(ListAPIView):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
+    """Класс для просмотра списка товаров"""
     throttle_classes = [AnonRateThrottle]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -98,10 +105,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class ProductInfoView(APIView):
+    """Класс для работы с информацией о товаре"""
     throttle_classes = [AnonRateThrottle]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def create_order(self, user_id, product_info_id, product):
+        """Создание номера заказа"""
         order_count = Order.objects.filter(user_id=user_id, product_info_id=product_info_id).count()
         if order_count >= 1:
             return Response(f"{product} уже в Корзине Пользователя (user_id: {user_id})")
@@ -109,6 +118,7 @@ class ProductInfoView(APIView):
         return Response(f"{product} добавлен в Корзину Пользователя (user_id: {user_id})")
 
     def get(self, request, product_id):
+        """Получение информации о товаре"""
         if not product_id:
             return Response({'Error': 'Method GET not allowed'})
         try:
@@ -116,9 +126,9 @@ class ProductInfoView(APIView):
         except:
             return Response({'Error': 'Object does not exists'})
         return Response(ProductInfoSerializer(product_info).data)
-        # return render(request, 'product_info.html', {'product_info': product_info})
 
     def put(self, request, *args, **kwargs):
+        """Добавление товара в корзину"""
         product_id = kwargs.get('product_id')
         if not product_id:
             return Response({'Error': 'Method PUT not allowed'})
@@ -137,10 +147,12 @@ class ProductInfoView(APIView):
 
 
 class BasketView(APIView):
+    """Класс для работы с корзиной пользователя"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        """Получение заказов пользователя"""
         pk = kwargs.get('pk')
         if pk:
             return Response({'Error': 'Method GET not allowed'})
@@ -153,6 +165,7 @@ class BasketView(APIView):
         return Response(BasketSerializer(queryset, many=True).data)
 
     def put(self, request, *args, **kwargs):
+        """Изменение количества товара"""
         pk = kwargs.get('pk')
         if not pk:
             return Response("{'Error': 'Method PUT not allowed'}")
@@ -172,6 +185,7 @@ class BasketView(APIView):
                         f"{serializer.data['quantity']} шт.")
 
     def delete(self, request, *args, **kwargs):
+        """Удаление товара из корзины"""
         pk = kwargs.get('pk')
         if not pk:
             return Response("{'Error': 'Method DELETE not allowed'}")
@@ -184,10 +198,12 @@ class BasketView(APIView):
 
 
 class ContactView(APIView):
+    """Класс для работы с контактами пользователей"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        """Получение контактов пользователя"""
         pk = kwargs.get('pk')
         if pk:
             return Response({'Error': 'Method GET not allowed'})
@@ -195,6 +211,7 @@ class ContactView(APIView):
         return Response(ContactSerializer(queryset, many=True).data)
 
     def post(self, request, **kwargs):
+        """Создание контакта пользователя"""
         pk = kwargs.get('pk')
         if pk:
             return Response({'Error': 'Method POST not allowed'})
@@ -212,6 +229,7 @@ class ContactView(APIView):
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
+        """Изменение контакта пользователя"""
         pk = kwargs.get('pk')
         if not pk:
             return Response("{'Error': 'Method PUT not allowed'}")
@@ -225,6 +243,7 @@ class ContactView(APIView):
         return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
+        """Удаление контакта пользователя"""
         pk = kwargs.get('pk')
         if not pk:
             return Response("{'Error': 'Method DELETE not allowed'}")
@@ -238,6 +257,7 @@ class ContactView(APIView):
 
 
 class ThanksForOrderView(APIView):
+    """Класс 'Спасибо за заказ!'"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
@@ -260,12 +280,14 @@ class ThanksForOrderView(APIView):
 
 
 class OrderListView(APIView):
+    """Класс для работы с заказами пользователя"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
     filter_backends = [OrderingFilter]
     ordering_fields = ['status']
 
     def update_order_new(self, user_id):
+        """Обновление статуса заказа и создание номера для нового заказа"""
         Order.objects.filter(user_id=user_id, status='basket').update(status='new')
         orders = Order.objects.filter(user_id=user_id, status='new').values('user_id', 'date').annotate().distinct()
         for i, v in enumerate(orders):
@@ -274,12 +296,14 @@ class OrderListView(APIView):
                 update(order_number=f"{user_id}-{v['id']}")
 
     def update_order_canceled(self, user_id):
+        """Обновление статуса заказа на при удалении контакта"""
         try:
             Order.objects.filter(user_id=user_id).exclude(status='basket').update(status='canceled')
         except:
             return Response('Object does not exist')
 
     def get(self, request, **kwargs):
+        """Получение детализированного заказа пользователя"""
         order_number = kwargs.get('order_number')
         if order_number:
             order = Order.objects.filter(user_id=request.user.id, order_number=order_number). \
@@ -298,10 +322,12 @@ class OrderListView(APIView):
 
 
 class ShopUpdateUserView(APIView):
+    """Класс для прикрепления поставщиков к магазинам"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
+        """Изменение user_id магазина"""
         if request.user.type != 'supplier':
             return Response({'Error': 'Only for suppliers'})
         try:
@@ -317,10 +343,12 @@ class ShopUpdateUserView(APIView):
 
 
 class SupplierOrdersView(APIView):
+    """Класс для просмотра заказов поставщиком"""
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, **kwargs):
+        """Получение заказов поставщика"""
         order_number = kwargs.get('order_number')
         if request.user.type != 'supplier':
             return Response({'Error': 'Only for suppliers'})
