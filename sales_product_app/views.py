@@ -12,8 +12,7 @@ from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework import viewsets
 
-from .forms import UserForm
-from .models import CustomUser, ProductInfo, Shop, Category, Product, Order, Contact
+from .models import CustomUser, ProductInfo, Shop, Category, Product, Order, Contact, ProductParameter
 from .serializers import ProductInfoSerializer, ShopSerializer, CategorySerializer, ProductSerializer, \
     BasketSerializer, ContactSerializer, ThanksForOrderSerializer, OrderListSerializer, OrderDetailSerializer, \
     CustomUserSerializer
@@ -33,14 +32,6 @@ class UserView(APIView):
     """Класс для просмотра списка пользователей"""
     permission_classes = [IsAdminUser]
 
-    def get(self, request, **kwargs):
-        """Список пользователей"""
-        pk = kwargs.get('pk')
-        if pk:
-            return Response({'Error': 'Method GET not allowed'})
-        users = CustomUser.objects.all()
-        return render(request, 'users-list.html', {'users': users})
-
     # def post(self, request, **kwargs):
     # """Пример асинхронного создания пользователя через Celery"""
     #     pk = kwargs.get('pk')
@@ -54,7 +45,7 @@ class UserView(APIView):
     #     return Response(serializer.data)
 
 
-class ShopView(ListAPIView):
+class ShopView(APIView):
     """Класс для работы со списком магазинов """
     throttle_classes = [AnonRateThrottle]
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -96,7 +87,7 @@ class CategoryView(ListAPIView):
 class ProductViewSet(viewsets.ModelViewSet):
     """Класс для просмотра списка товаров"""
     throttle_classes = [AnonRateThrottle]
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().select_related('category')
     serializer_class = ProductSerializer
     filter_backends = [OrderingFilter, SearchFilter]
     ordering_fields = ['name']
@@ -200,7 +191,7 @@ class BasketView(APIView):
 class ContactView(APIView):
     """Класс для работы с контактами пользователей"""
     throttle_classes = [UserRateThrottle]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """Получение контактов пользователя"""

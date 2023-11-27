@@ -38,6 +38,6 @@ def order_status_new(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Contact)
 def order_status_delete(sender, instance, **kwargs):
     order_number = get_order_number(instance.user.id, 'canceled')
-    send_email_status_canceled(instance.user.first_name, instance.user.last_name,
-                               instance.user.email, order_number[0]['order_number'],
-                               [email['email'] for email in get_supplier_email(instance.user.id)])
+    send_email_status_canceled.delay(instance.user.first_name, instance.user.last_name,
+                                     instance.user.email, order_number[0]['order_number'],
+                                     [email['email'] for email in get_supplier_email(instance.user.id)])

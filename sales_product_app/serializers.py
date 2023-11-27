@@ -5,6 +5,7 @@ from .models import Shop, Category, CustomUser, ProductInfo, Product, Parameter,
 
 class CustomUserSerializer(UserCreateSerializer):
     thumbnail = serializers.ImageField(required=True)
+
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name',
@@ -14,6 +15,7 @@ class CustomUserSerializer(UserCreateSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=False)
     is_active = serializers.BooleanField()
+
     class Meta:
         model = Shop
         fields = ('id', 'name', 'url', 'is_active')
@@ -50,16 +52,16 @@ class ProductParameterSerializer(serializers.ModelSerializer):
 
 class ProductInfoSerializer(serializers.HyperlinkedModelSerializer):
     shop = serializers.StringRelatedField()
-    product_parameter = ProductParameterSerializer(read_only=True, many=True)
     product = serializers.StringRelatedField()
     basket = serializers.BooleanField(required=True)
     quantity = serializers.IntegerField(required=False)
     retail_price = serializers.IntegerField(required=False)
-    # thumbnail = serializers.ImageField()
+    product_parameter = ProductParameterSerializer(read_only=True, many=True)
+
     class Meta:
         model = ProductInfo
-        fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price', 'product_parameter', 'basket',
-                  'thumbnail')
+        fields = ('id', 'product_id', 'product', 'shop', 'quantity', 'retail_price',  'basket', 'thumbnail',
+                  'product_parameter')
 
 
 class BasketSerializer(serializers.ModelSerializer):
@@ -115,6 +117,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(read_only=True)
     street = serializers.CharField(read_only=True)
     house = serializers.CharField(read_only=True)
+
     class Meta:
         model = Order
         fields = ('order_number', 'date', 'status', 'name', 'shop', 'price', 'quantity',

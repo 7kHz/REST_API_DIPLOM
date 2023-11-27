@@ -35,6 +35,7 @@ urlpatterns = [
     path('activate/<str:uid>/<str:token>/', account_activation, name='account_activation_success'),
     path('api/v1/', include('djoser.urls'), name='user-create-password-reset'),
     path('api/v1/', include(router.urls)),
+    path("__debug__/", include("debug_toolbar.urls")),
     path('auth/', include('social_django.urls', namespace='social')),
     path('api/v1/users-list/', UserView.as_view(), name='users-list'),
     # path('api/v1/users-create/', UserView.as_view(), name='create-user'),
