@@ -16,4 +16,7 @@ python3 manage.py runserver
 PUT 'api/v1/shops-update-user/'  
 
 ### Команда для тестирования:
-pytest
+***Запуск тестирования***  
+pytest  
+***Формирование отчета о покрытии тестами***  
+pytest --cov=.

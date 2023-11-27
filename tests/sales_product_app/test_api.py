@@ -2,7 +2,6 @@ import pytest
 from django.urls import reverse
 from model_bakery import baker
 from rest_framework.test import APIClient
-from rest_framework.authtoken.models import Token
 
 from sales_product_app.models import Shop, Product, ProductInfo, Category, CustomUser
 
@@ -71,6 +70,7 @@ def test_update_product(client, category_factory, product_factory):
     response = client.put('/api/v1/products/2/', data={'name': 'Kingston DataTraveler Exodia Onyx 64GB USB3.2 Black'})
     assert response.status_code == 200
     assert response.data['name'] == 'Kingston DataTraveler Exodia Onyx 64GB USB3.2 Black'
+
 
 @pytest.mark.django_db
 def test_shop_update(client, shop_factory):
